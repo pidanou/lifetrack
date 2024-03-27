@@ -3,6 +3,8 @@ package api
 import (
 	"net/http"
 
+	"github.com/labstack/echo/v4"
+
 	"github.com/pidanou/lifetrack/internal/datastore"
 	"github.com/pidanou/lifetrack/internal/handlers"
 )
@@ -17,19 +19,14 @@ func NewServer(datastore datastore.Datastore, port string) *Server {
 }
 
 func (s *Server) Start() error {
-	routes := s.InitRoutes()
-	return http.ListenAndServe(s.port, routes)
-}
-
-func (s *Server) InitRoutes() *http.ServeMux {
-	mux := http.NewServeMux()
+	e := echo.New()
 
 	hydrationHandler := handlers.HydrationHandler{Datastore: s.datastore}
-	mux.HandleFunc("POST /hydration", hydrationHandler.HandlePostHydration)
-	mux.HandleFunc("GET /hydration", hydrationHandler.HandleGetHydration)
+	e.GET("/hydration", hydrationHandler.HandleGetHydration)
+	e.POST("/hydration", hydrationHandler.HandlePostHydration)
 
 	sleepHandler := handlers.SleepHandler{Datastore: s.datastore}
-	mux.HandleFunc("POST /sleep", sleepHandler.HandlePostSleep)
+	e.POST("/sleep", sleepHandler.HandlePostSleep)
 
-	return mux
+	return http.ListenAndServe(s.port, e)
 }

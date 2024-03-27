@@ -1,11 +1,10 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
+	"github.com/labstack/echo/v4"
 	"github.com/pidanou/lifetrack/internal/datastore"
 	"github.com/pidanou/lifetrack/internal/types"
 	"github.com/pidanou/lifetrack/pkg/timeutil"
@@ -15,9 +14,7 @@ type HydrationHandler struct {
 	Datastore datastore.Datastore
 }
 
-func (h *HydrationHandler) HandlePostHydration(w http.ResponseWriter, r *http.Request) {
-
-	body, _ := io.ReadAll(r.Body)
+func (h *HydrationHandler) HandlePostHydration(c echo.Context) error {
 
 	type typeReqBody struct {
 		Name     string
@@ -26,7 +23,10 @@ func (h *HydrationHandler) HandlePostHydration(w http.ResponseWriter, r *http.Re
 
 	var reqBody typeReqBody
 
-	json.Unmarshal(body, &reqBody)
+	err := c.Bind(&reqBody)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "Bad Request")
+	}
 
 	fmt.Println(reqBody.Name, reqBody.Quantity)
 
@@ -36,13 +36,10 @@ func (h *HydrationHandler) HandlePostHydration(w http.ResponseWriter, r *http.Re
 
 	fmt.Println(error)
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(reqBody.Name))
-
+	return c.String(http.StatusOK, "OK")
 }
 
-func (h *HydrationHandler) HandleGetHydration(w http.ResponseWriter, r *http.Request) {
-	body, _ := io.ReadAll(r.Body)
+func (h *HydrationHandler) HandleGetHydration(c echo.Context) error {
 
 	type typeReqBody struct {
 		Date string
@@ -50,7 +47,10 @@ func (h *HydrationHandler) HandleGetHydration(w http.ResponseWriter, r *http.Req
 
 	var reqBody typeReqBody
 
-	json.Unmarshal(body, &reqBody)
+	err := c.Bind(&reqBody)
+	if err != nil {
+		return c.String(http.StatusBadRequest, "Bad Request")
+	}
 
 	date, _ := timeutil.ParseDayDateString(reqBody.Date)
 
@@ -58,7 +58,6 @@ func (h *HydrationHandler) HandleGetHydration(w http.ResponseWriter, r *http.Req
 
 	fmt.Println(hydration)
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(reqBody.Date))
+	return c.String(http.StatusOK, "OK")
 
 }
